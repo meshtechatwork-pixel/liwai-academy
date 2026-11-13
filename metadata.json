@@ -1,0 +1,6 @@
+{
+  "name": "LIWAI ACADEMY",
+  "description": "Learn It With AI — An online learning platform for Web Design, Web Development, Social Media Management, Video Editing, and AI Prompt Engineering.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
