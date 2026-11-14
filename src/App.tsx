@@ -37,7 +37,7 @@ export default function App() {
     <ErrorBoundary>
       <AuthProvider>
         <LearningProvider>
-          <BrowserRouter>
+          <BrowserRouter basename={import.meta.env.BASE_URL}>
             <div className="flex min-h-screen flex-col bg-[#100B20] text-white">
               <Navbar />
               <main className="flex-1">

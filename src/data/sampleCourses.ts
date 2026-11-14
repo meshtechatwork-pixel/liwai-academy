@@ -6,14 +6,21 @@ import {
   SiteContent,
 } from '../types/learning';
 
-export const HERO_IMAGE = '/src/assets/images/hero_academy_workspace_1794569619385.jpg';
+import heroWorkspaceImg from '../assets/images/hero_academy_workspace_1794569619385.jpg';
+import webDesignImg from '../assets/images/course_web_design_1794569620787.jpg';
+import webDevImg from '../assets/images/course_web_development_1794569619225.jpg';
+import socialMediaImg from '../assets/images/course_social_media_1794569620997.jpg';
+import videoEditingImg from '../assets/images/course_video_editing_1794569621674.jpg';
+import aiPromptingImg from '../assets/images/course_ai_prompting_1794569621972.jpg';
+
+export const HERO_IMAGE = heroWorkspaceImg;
 
 export const CATEGORY_IMAGES: Record<string, string> = {
-  'Web Design': '/src/assets/images/course_web_design_1794569620787.jpg',
-  'Web Development': '/src/assets/images/course_web_development_1794569619225.jpg',
-  'Social Media Management': '/src/assets/images/course_social_media_1794569620997.jpg',
-  'Video Editing': '/src/assets/images/course_video_editing_1794569621674.jpg',
-  'AI Prompt Generator': '/src/assets/images/course_ai_prompting_1794569621972.jpg',
+  'Web Design': webDesignImg,
+  'Web Development': webDevImg,
+  'Social Media Management': socialMediaImg,
+  'Video Editing': videoEditingImg,
+  'AI Prompt Generator': aiPromptingImg,
 };
 
 export const SAMPLE_CATEGORIES: CategoryConfig[] = [
