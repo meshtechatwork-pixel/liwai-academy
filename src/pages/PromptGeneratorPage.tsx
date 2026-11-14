@@ -1,26 +1,29 @@
 import React, { useState } from 'react';
-import { BookmarkPlus, Check, Copy, Eraser, Sparkles, Trash2 } from 'lucide-react';
-import { useAcademy } from '../context/AcademyContext';
+import {
+  BookmarkPlus,
+  Check,
+  Copy,
+  Eraser,
+  RefreshCw,
+  Sparkles,
+  Star,
+  Trash2,
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { PromptGeneratorResponse } from '../types/academy';
+import { useLearning } from '../hooks/useLearning';
+import { generateStructuredPrompt } from '../services/promptService';
+import { PromptGeneratorResponse } from '../types/learning';
+
+const AI_PLATFORMS = ['ChatGPT', 'Google Gemini', 'Claude', 'Microsoft Copilot'];
 
 const PROMPT_CATEGORIES = [
-  'Web Design',
-  'Web Development',
-  'Social Media Management',
-  'Video Editing',
-  'AI Prompt Engineering',
-  'Marketing & Copywriting',
-  'Education & Course Creation',
-];
-
-const AI_PLATFORMS = [
-  'Google Gemini',
-  'ChatGPT (GPT-4o / o3)',
-  'Claude (Sonnet / Opus)',
-  'Midjourney / Image Models',
-  'Veo / Video Generation',
-  'Cursor / Coding Assistants',
+  'Business',
+  'Education',
+  'Marketing',
+  'Programming',
+  'Design',
+  'Writing',
+  'Social Media',
 ];
 
 const PROMPT_PURPOSES = [
@@ -29,7 +32,8 @@ const PROMPT_PURPOSES = [
   'High-Retention Social Media Campaign',
   'Video Script, Storyboard & Editing Plan',
   'Lesson Plan & Curriculum Design',
-  'Research Synthesis & Executive Audit',
+  'Business Strategy & Executive Audit',
+  'Long-Form Editorial or Technical Writing',
 ];
 
 const TONES = [
@@ -48,15 +52,23 @@ const OUTPUT_FORMATS = [
   'Ready-to-Run Script / Code',
 ];
 
+const DETAIL_LEVELS = [
+  'Concise Overview',
+  'Standard Detailed',
+  'Comprehensive Blueprint',
+  'Expert Deep-Dive',
+];
+
 export default function PromptGeneratorPage() {
   const { user } = useAuth();
-  const { savedPrompts, savePromptToHistory, deleteSavedPrompt } = useAcademy();
+  const { prompts, savePromptRecord, togglePromptFavorite, deletePromptRecord } = useLearning();
 
-  const [category, setCategory] = useState(PROMPT_CATEGORIES[0]);
   const [platform, setPlatform] = useState(AI_PLATFORMS[0]);
+  const [category, setCategory] = useState(PROMPT_CATEGORIES[0]);
   const [purpose, setPurpose] = useState(PROMPT_PURPOSES[0]);
   const [tone, setTone] = useState(TONES[0]);
   const [outputFormat, setOutputFormat] = useState(OUTPUT_FORMATS[0]);
+  const [detailLevel, setDetailLevel] = useState(DETAIL_LEVELS[1]);
   const [topic, setTopic] = useState('');
 
   const [loading, setLoading] = useState(false);
@@ -64,37 +76,39 @@ export default function PromptGeneratorPage() {
   const [result, setResult] = useState<PromptGeneratorResponse | null>(null);
   const [copied, setCopied] = useState(false);
   const [savedFlag, setSavedFlag] = useState(false);
+  const [historyFilter, setHistoryFilter] = useState<'all' | 'favorites'>('all');
 
-  const handleGenerate = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const runGeneration = async (regenerateSeed?: string) => {
     setLoading(true);
     setError(null);
     setSavedFlag(false);
 
     try {
-      const response = await fetch('/api/prompts/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          category,
-          platform,
-          purpose,
-          tone,
-          outputFormat,
-          topic,
-        }),
+      const data = await generateStructuredPrompt({
+        platform,
+        category,
+        purpose,
+        tone,
+        outputFormat,
+        detailLevel,
+        topic,
+        regenerateSeed,
       });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to generate structured prompt.');
-      }
-      setResult(data as PromptGeneratorResponse);
+      setResult(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to reach prompt service.');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleGenerate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await runGeneration();
+  };
+
+  const handleRegenerate = async () => {
+    await runGeneration(String(Date.now()));
   };
 
   const handleCopy = async () => {
@@ -112,17 +126,20 @@ export default function PromptGeneratorPage() {
     setSavedFlag(false);
   };
 
-  const handleSavePrompt = async () => {
+  const handleSavePrompt = async (asFavorite = false) => {
     if (!user || !result) return;
     try {
-      await savePromptToHistory({
-        category,
+      await savePromptRecord({
+        title: result.title || `${category} — ${purpose}`,
         platform,
+        category,
         purpose,
         tone,
         outputFormat,
+        detailLevel,
         topic: topic.trim() || `${category} — ${purpose}`,
         generatedPrompt: result.prompt,
+        isFavorite: asFavorite,
       });
       setSavedFlag(true);
     } catch (err) {
@@ -130,19 +147,23 @@ export default function PromptGeneratorPage() {
     }
   };
 
+  const visibleHistory =
+    historyFilter === 'favorites' ? prompts.filter((p) => p.isFavorite) : prompts;
+
   return (
     <div className="bg-[#100B20] text-white">
       <div className="mx-auto max-w-[1280px] px-6 py-12 lg:py-16">
         <div className="max-w-3xl">
           <p className="text-xs font-semibold tracking-wide text-[#A855F7]">
-            LIWAI ACADEMY · AI Prompt Generator
+            Learn It With AI · Prompt Engineering Lab
           </p>
           <h1 className="mt-2 font-display text-3xl font-bold text-white sm:text-4xl text-balance">
             Engineer structured, high-precision prompts for any AI platform.
           </h1>
           <p className="mt-3 text-sm leading-relaxed text-slate-300">
-            Configure your prompt category, target AI platform, purpose, tone, and output format.
-            Our backend Gemini service generates a complete prompt ready to copy into your workflow.
+            Select your target AI platform, domain category, prompt purpose, tone, output format,
+            and level of detail. Our secure backend AI service crafts a copy-ready prompt with
+            variables and platform execution tips.
           </p>
         </div>
 
@@ -150,45 +171,47 @@ export default function PromptGeneratorPage() {
           {/* Configuration Form */}
           <form
             onSubmit={handleGenerate}
-            className="rounded-2xl border border-white/10 bg-[#17112B] p-6 sm:p-7 lg:col-span-5"
+            className="rounded-2xl border border-white/10 bg-[#17112B]/80 backdrop-blur-md p-6 sm:p-7 lg:col-span-5"
           >
             <h2 className="font-display text-lg font-semibold text-white">Prompt Parameters</h2>
 
             <div className="mt-5 space-y-4">
-              <div>
-                <label className="block text-xs font-medium text-slate-300" htmlFor="pg-category">
-                  Prompt Category
-                </label>
-                <select
-                  id="pg-category"
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="mt-1.5 w-full rounded-lg border border-white/15 bg-[#100B20] px-3.5 py-2.5 text-sm text-white focus:border-[#A855F7] focus:outline-none"
-                >
-                  {PROMPT_CATEGORIES.map((item) => (
-                    <option key={item} value={item}>
-                      {item}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="block text-xs font-medium text-slate-300" htmlFor="pg-platform">
+                    AI Platform
+                  </label>
+                  <select
+                    id="pg-platform"
+                    value={platform}
+                    onChange={(e) => setPlatform(e.target.value)}
+                    className="mt-1.5 w-full rounded-lg border border-white/15 bg-[#100B20] px-3.5 py-2.5 text-sm text-white focus:border-[#A855F7] focus:outline-none"
+                  >
+                    {AI_PLATFORMS.map((item) => (
+                      <option key={item} value={item}>
+                        {item}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-              <div>
-                <label className="block text-xs font-medium text-slate-300" htmlFor="pg-platform">
-                  AI Platform
-                </label>
-                <select
-                  id="pg-platform"
-                  value={platform}
-                  onChange={(e) => setPlatform(e.target.value)}
-                  className="mt-1.5 w-full rounded-lg border border-white/15 bg-[#100B20] px-3.5 py-2.5 text-sm text-white focus:border-[#A855F7] focus:outline-none"
-                >
-                  {AI_PLATFORMS.map((item) => (
-                    <option key={item} value={item}>
-                      {item}
-                    </option>
-                  ))}
-                </select>
+                <div>
+                  <label className="block text-xs font-medium text-slate-300" htmlFor="pg-category">
+                    Category
+                  </label>
+                  <select
+                    id="pg-category"
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    className="mt-1.5 w-full rounded-lg border border-white/15 bg-[#100B20] px-3.5 py-2.5 text-sm text-white focus:border-[#A855F7] focus:outline-none"
+                  >
+                    {PROMPT_CATEGORIES.map((item) => (
+                      <option key={item} value={item}>
+                        {item}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               <div>
@@ -229,16 +252,16 @@ export default function PromptGeneratorPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-300" htmlFor="pg-format">
-                    Output Format
+                  <label className="block text-xs font-medium text-slate-300" htmlFor="pg-detail">
+                    Level of Detail
                   </label>
                   <select
-                    id="pg-format"
-                    value={outputFormat}
-                    onChange={(e) => setOutputFormat(e.target.value)}
+                    id="pg-detail"
+                    value={detailLevel}
+                    onChange={(e) => setDetailLevel(e.target.value)}
                     className="mt-1.5 w-full rounded-lg border border-white/15 bg-[#100B20] px-3.5 py-2.5 text-sm text-white focus:border-[#A855F7] focus:outline-none"
                   >
-                    {OUTPUT_FORMATS.map((item) => (
+                    {DETAIL_LEVELS.map((item) => (
                       <option key={item} value={item}>
                         {item}
                       </option>
@@ -248,13 +271,31 @@ export default function PromptGeneratorPage() {
               </div>
 
               <div>
+                <label className="block text-xs font-medium text-slate-300" htmlFor="pg-format">
+                  Output Format
+                </label>
+                <select
+                  id="pg-format"
+                  value={outputFormat}
+                  onChange={(e) => setOutputFormat(e.target.value)}
+                  className="mt-1.5 w-full rounded-lg border border-white/15 bg-[#100B20] px-3.5 py-2.5 text-sm text-white focus:border-[#A855F7] focus:outline-none"
+                >
+                  {OUTPUT_FORMATS.map((item) => (
+                    <option key={item} value={item}>
+                      {item}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
                 <label className="block text-xs font-medium text-slate-300" htmlFor="pg-topic">
                   Project Goal or Topic Context (optional)
                 </label>
                 <textarea
                   id="pg-topic"
                   rows={3}
-                  maxLength={500}
+                  maxLength={600}
                   value={topic}
                   onChange={(e) => setTopic(e.target.value)}
                   placeholder="Describe your product, target audience, tech stack, or creative brief..."
@@ -284,29 +325,52 @@ export default function PromptGeneratorPage() {
           </form>
 
           {/* Output Stage */}
-          <div className="lg:col-span-7 flex flex-col gap-6">
-            <div className="rounded-2xl border border-white/10 bg-[#17112B] p-6 sm:p-7">
+          <div className="flex flex-col gap-6 lg:col-span-7">
+            <div className="rounded-2xl border border-white/10 bg-[#17112B]/80 backdrop-blur-md p-6 sm:p-7">
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
                 <div>
                   <h2 className="font-display text-lg font-semibold text-white">
                     {result ? result.title : 'Structured Prompt Output'}
                   </h2>
                   <p className="mt-0.5 text-xs text-slate-400">
-                    {category} · {platform} · {outputFormat}
+                    {platform} · {category} · {detailLevel}
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  {user && result && (
+                <div className="flex flex-wrap items-center gap-2">
+                  {result && (
                     <button
                       type="button"
-                      onClick={handleSavePrompt}
-                      disabled={savedFlag}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 px-3.5 py-2 text-xs font-semibold text-white hover:border-[#A855F7] disabled:opacity-60"
+                      disabled={loading}
+                      onClick={handleRegenerate}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 px-3 py-2 text-xs font-semibold text-white hover:border-[#A855F7] disabled:opacity-50"
                     >
-                      <BookmarkPlus className="h-3.5 w-3.5" />
-                      {savedFlag ? 'Saved' : 'Save'}
+                      <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
+                      Regenerate
                     </button>
+                  )}
+                  {user && result && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => handleSavePrompt(false)}
+                        disabled={savedFlag}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 px-3 py-2 text-xs font-semibold text-white hover:border-[#A855F7] disabled:opacity-60"
+                      >
+                        <BookmarkPlus className="h-3.5 w-3.5" />
+                        {savedFlag ? 'Saved' : 'Save'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleSavePrompt(true)}
+                        disabled={savedFlag}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-xs font-semibold text-amber-200 hover:bg-amber-500/20 disabled:opacity-60"
+                        title="Save to Favourites"
+                      >
+                        <Star className="h-3.5 w-3.5" />
+                        Favourite
+                      </button>
+                    </>
                   )}
                   <button
                     type="button"
@@ -321,7 +385,7 @@ export default function PromptGeneratorPage() {
                     type="button"
                     disabled={!result && !topic}
                     onClick={handleClear}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 px-3.5 py-2 text-xs font-semibold text-slate-300 hover:text-white disabled:opacity-40"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 px-3 py-2 text-xs font-semibold text-slate-300 hover:text-white disabled:opacity-40"
                   >
                     Clear
                   </button>
@@ -360,7 +424,9 @@ export default function PromptGeneratorPage() {
 
                   {result.usageTips.length > 0 && (
                     <div className="border-t border-white/10 pt-4">
-                      <h3 className="text-xs font-semibold text-white">Platform Execution Tips</h3>
+                      <h3 className="text-xs font-semibold text-white">
+                        {platform} Execution Tips
+                      </h3>
                       <ul className="mt-2.5 space-y-2 text-sm text-slate-300">
                         {result.usageTips.map((tip, i) => (
                           <li key={i} className="flex gap-2.5">
@@ -385,51 +451,103 @@ export default function PromptGeneratorPage() {
               )}
             </div>
 
-            {/* Saved Prompts History for Signed-In Users */}
-            {user && savedPrompts.length > 0 && (
-              <div className="rounded-2xl border border-white/10 bg-[#17112B] p-6">
-                <h2 className="font-display text-base font-semibold text-white">
-                  Saved Prompt Library ({savedPrompts.length})
-                </h2>
-                <div className="mt-4 space-y-3">
-                  {savedPrompts.slice(0, 6).map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex flex-col justify-between gap-3 rounded-xl border border-white/10 bg-[#100B20] p-4 sm:flex-row sm:items-center"
+            {/* Saved Prompts & Favourites Library */}
+            {user && prompts.length > 0 && (
+              <div className="rounded-2xl border border-white/10 bg-[#17112B]/80 backdrop-blur-md p-6">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <h2 className="font-display text-base font-semibold text-white">
+                    Prompt History &amp; Favourites ({visibleHistory.length})
+                  </h2>
+                  <div className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-[#100B20] p-1">
+                    <button
+                      type="button"
+                      onClick={() => setHistoryFilter('all')}
+                      className={`rounded-md px-3 py-1 text-xs font-medium ${
+                        historyFilter === 'all'
+                          ? 'bg-[#6D28D9] text-white'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
                     >
-                      <div className="min-w-0">
-                        <p className="text-xs text-[#C084FC]">
-                          {item.category} · {item.platform}
-                        </p>
-                        <p className="mt-1 truncate text-sm font-medium text-white">{item.topic}</p>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setResult({
-                              title: item.topic,
-                              prompt: item.generatedPrompt,
-                              usageTips: [],
-                              variables: [],
-                            })
-                          }
-                          className="rounded-lg border border-white/15 px-3 py-1.5 text-xs font-semibold text-white hover:border-[#A855F7]"
-                        >
-                          Load
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => deleteSavedPrompt(item.id)}
-                          aria-label="Delete saved prompt"
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 text-slate-400 hover:text-rose-300"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                      All ({prompts.length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setHistoryFilter('favorites')}
+                      className={`rounded-md px-3 py-1 text-xs font-medium ${
+                        historyFilter === 'favorites'
+                          ? 'bg-[#6D28D9] text-white'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      Favourites ({prompts.filter((p) => p.isFavorite).length})
+                    </button>
+                  </div>
                 </div>
+
+                {visibleHistory.length === 0 ? (
+                  <p className="mt-4 text-xs text-slate-400">
+                    No favourite prompts marked yet. Click the star icon on any saved prompt.
+                  </p>
+                ) : (
+                  <div className="mt-4 space-y-3">
+                    {visibleHistory.slice(0, 8).map((item) => (
+                      <div
+                        key={item.id}
+                        className="flex flex-col justify-between gap-3 rounded-xl border border-white/10 bg-[#100B20] p-4 sm:flex-row sm:items-center"
+                      >
+                        <div className="min-w-0">
+                          <p className="text-xs text-[#C084FC]">
+                            {item.platform} · {item.category} · {item.detailLevel}
+                          </p>
+                          <p className="mt-1 truncate text-sm font-medium text-white">
+                            {item.title || item.topic}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => togglePromptFavorite(item.id, !item.isFavorite)}
+                            aria-label={
+                              item.isFavorite ? 'Remove from favourites' : 'Mark as favourite'
+                            }
+                            className={`inline-flex h-8 w-8 items-center justify-center rounded-lg border ${
+                              item.isFavorite
+                                ? 'border-amber-400/50 bg-amber-500/15 text-amber-300'
+                                : 'border-white/10 text-slate-400 hover:text-amber-300'
+                            }`}
+                          >
+                            <Star
+                              className="h-3.5 w-3.5"
+                              fill={item.isFavorite ? 'currentColor' : 'none'}
+                            />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setResult({
+                                title: item.title || item.topic,
+                                prompt: item.generatedPrompt,
+                                usageTips: [],
+                                variables: [],
+                              })
+                            }
+                            className="rounded-lg border border-white/15 px-3 py-1.5 text-xs font-semibold text-white hover:border-[#A855F7]"
+                          >
+                            Load
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => deletePromptRecord(item.id)}
+                            aria-label="Delete saved prompt"
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 text-slate-400 hover:text-rose-300"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>

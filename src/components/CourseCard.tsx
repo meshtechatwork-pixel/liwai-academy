@@ -2,20 +2,27 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, BookOpen } from 'lucide-react';
 import { CATEGORY_IMAGES } from '../data/sampleCourses';
-import { Course, Enrollment } from '../types/academy';
+import { Course, Enrollment, ProgressRecord } from '../types/learning';
 
 interface CourseCardProps {
   course: Course;
   enrollment?: Enrollment;
+  progress?: ProgressRecord;
 }
 
-export default function CourseCard({ course, enrollment }: CourseCardProps) {
+export default function CourseCard({ course, enrollment, progress }: CourseCardProps) {
   const [imgError, setImgError] = useState(false);
   const resolvedImg = course.thumbnailUrl || CATEGORY_IMAGES[course.category] || '';
+  const progressPercent = progress?.progressPercent ?? 0;
+  const isCompleted =
+    progress?.status === 'completed' || enrollment?.status === 'completed';
 
   return (
-    <article className="group flex flex-col overflow-hidden rounded-xl border border-white/10 bg-[#17112B] transition-colors duration-150 hover:border-[#A855F7]/50">
-      <Link to={`/courses/${course.id}`} className="relative aspect-[4/3] w-full overflow-hidden bg-[#1D1536]">
+    <article className="group flex flex-col overflow-hidden rounded-xl border border-white/10 bg-[#17112B]/80 backdrop-blur-md transition-all duration-200 hover:border-[#A855F7]/50">
+      <Link
+        to={`/courses/${course.id}`}
+        className="relative aspect-[4/3] w-full overflow-hidden bg-[#1D1536]"
+      >
         {!imgError && resolvedImg ? (
           <img
             src={resolvedImg}
@@ -52,25 +59,25 @@ export default function CourseCard({ course, enrollment }: CourseCardProps) {
         </p>
 
         {enrollment && (
-          <div className="mt-4 pt-3 border-t border-white/8">
+          <div className="mt-4 border-t border-white/8 pt-3">
             <div className="flex items-center justify-between text-xs">
               <span className="text-slate-300">
-                {enrollment.status === 'completed' ? 'Completed' : 'In Progress'}
+                {isCompleted ? 'Completed' : 'In Progress'}
               </span>
               <span className="font-mono tabular-nums text-[#C084FC]">
-                {enrollment.progressPercent}%
+                {progressPercent}%
               </span>
             </div>
             <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
               <div
                 className="h-full bg-[#A855F7] transition-all duration-300"
-                style={{ width: `${enrollment.progressPercent}%` }}
+                style={{ width: `${progressPercent}%` }}
               />
             </div>
           </div>
         )}
 
-        <div className="mt-auto pt-5 flex items-center justify-between border-t border-white/8 text-xs text-slate-400">
+        <div className="mt-auto flex items-center justify-between border-t border-white/8 pt-5 text-xs text-slate-400">
           <span>
             {course.instructor} · <span className="tabular-nums">{course.duration}</span>
           </span>

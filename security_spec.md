@@ -1,23 +1,24 @@
-# LIWAI ACADEMY Firestore Security Specification
+# Learn It With AI — Firestore Security Specification
 
 ## 1. Data Invariants
-1. **Course Integrity**: Every lesson under `/courses/{courseId}/lessons/{lessonId}` must belong to an existing parent `/courses/{courseId}` document (`exists(...)`) and only administrators can create, update, or delete courses, lessons, or course levels.
+1. **Course & Lesson Integrity**: Every lesson in `/lessons/{lessonId}` must reference an existing `/courses/{courseId}` document (`exists(...)`). Only verified administrators can create, update, or delete courses, lessons, categories, course levels, and website content.
 2. **PII Isolation & Role Lock**: `/users/{userId}` holds student PII (`email`, `phone`, `country`, `countyOrState`, `townOrCity`). Only the profile owner (`request.auth.uid == userId`) or an administrator can read a user document. Students cannot self-assign `role: 'admin'` on creation or modify `role`, `uid`, or `createdAt` on update.
-3. **Enrollment Ownership & Parent Existence**: An enrollment cannot exist without a valid parent `/courses/{courseId}` document (`exists(...)`). Students can only create, read, or update enrollments where `userId == request.auth.uid`. Completed enrollments (`status == 'completed'`) are terminally locked for non-admin updates.
-4. **Certificate Atomicity & Anti-Forgery**: Students can only claim a certificate if their corresponding enrollment (`{userId}_{courseId}`) has `status == 'completed'` (checked via `get(...)` or `getAfter(...)` in an atomic batch), or an administrator can issue a certificate directly.
-5. **Strict List Query Enforcement**: Every `allow list` rule evaluates `resource.data` directly (never relying on client query filtering) and never performs `get()` or `exists()` lookups inside `allow list`.
-6. **Spoof-Proof Admin Identity**: Bootstrapped admin email checks (`meshtechatwork@gmail.com`) strictly require `request.auth.token.email_verified == true`.
+3. **Enrollment & Progress Ownership**: Every enrollment and progress record must reference an existing course (`exists(/databases/$(database)/documents/courses/$(incoming().courseId))`). Students can only create, read, or update records where `userId == request.auth.uid`. Completed records (`status == 'completed'`) are terminally locked for non-admin updates.
+4. **Certificate Anti-Forgery & Public Verification**: Students can only claim a certificate and public verification record if their corresponding `/progress/{uid}_{courseId}` document has `status == 'completed'` (checked via `getAfter(...)`), or an administrator can issue them directly. Public verification lookup (`/certificate_verifications/{certificateCode}`) allows single-document `get` without exposing student email, phone, or address.
+5. **Prompt History & Favourite Isolation**: `/prompts/{promptId}` is strictly owner-readable and owner-writable; updates are restricted exclusively to toggling `isFavorite`.
+6. **Notifications Isolation**: `/notifications/{notificationId}` is strictly readable by its owner (`userId == request.auth.uid`) or admin; owners may only update `isRead` to `true`.
+7. **Spoof-Proof Admin Identity**: Bootstrapped admin email checks (`meshtechatwork@gmail.com`) strictly require `request.auth.token.email_verified == true`.
 
 ## 2. The "Dirty Dozen" Adversarial Payloads
-1. **Self-Assigned Admin Role on Registration**: `POST /users/{uid}` with `{ role: "admin", ... }` by a student. -> `PERMISSION_DENIED`.
-2. **Privilege Escalation Shadow Update**: `PATCH /users/{uid}` adding `{ role: "admin" }` or `{ isVerified: true }` (ghost field). -> `PERMISSION_DENIED`.
-3. **Cross-User PII Read**: Authenticated Student A attempts `GET /users/{studentB_uid}` or `LIST /users`. -> `PERMISSION_DENIED`.
-4. **Unverified Admin Email Spoof**: User with `email: "meshtechatwork@gmail.com"` and `email_verified: false` attempts admin write on `/courses/{id}`. -> `PERMISSION_DENIED`.
-5. **Orphaned Enrollment**: Student creates `/enrollments/{uid}_fakeCourse` referencing a non-existent `courseId`. -> `PERMISSION_DENIED`.
-6. **Enrollment Hijack**: Student A attempts to create `/enrollments/{studentB_uid}_course1` with `userId: studentB_uid`. -> `PERMISSION_DENIED`.
-7. **Terminal State Tampering**: Student attempts to update an enrollment whose `status` is already `'completed'`. -> `PERMISSION_DENIED`.
-8. **Forged Certificate**: Student creates `/certificates/{certId}` for a course without a `'completed'` enrollment. -> `PERMISSION_DENIED`.
-9. **ID Poisoning**: Attempt to write `/courses/{2000-char-invalid-id}` with spaces or special characters. -> `PERMISSION_DENIED`.
-10. **Client-Injected Timestamp**: Attempt to create `/enrollments/{id}` with a backdated `enrolledAt` or `updatedAt != request.time`. -> `PERMISSION_DENIED`.
-11. **Value Poisoning**: Attempt to update `progressPercent` to `999` or `"100%"` (wrong type / out of bounds). -> `PERMISSION_DENIED`.
-12. **Blanket Prompt Scraping**: Student A attempts `LIST /saved_prompts` without `where('userId', '==', studentA_uid)` or attempts `GET /saved_prompts/{studentB_prompt}`. -> `PERMISSION_DENIED`.
+1. **Self-Assigned Admin Role on Registration**: `POST /users/{uid}` with `{ role: "admin" }`. -> `PERMISSION_DENIED`.
+2. **Shadow Update on User Profile**: `PATCH /users/{uid}` adding `{ isVerified: true }`. -> `PERMISSION_DENIED`.
+3. **Cross-User PII Read**: Student A calls `GET /users/{studentB}` or `LIST /users`. -> `PERMISSION_DENIED`.
+4. **Unverified Admin Email Spoof**: User with `email: "meshtechatwork@gmail.com"`, `email_verified: false` writes to `/courses/{id}`. -> `PERMISSION_DENIED`.
+5. **Orphaned Lesson**: Write `/lessons/{id}` referencing non-existent `courseId`. -> `PERMISSION_DENIED`.
+6. **Orphaned Enrollment**: Student creates `/enrollments/{uid}_fakeCourse`. -> `PERMISSION_DENIED`.
+7. **Terminal State Tampering**: Student updates `/progress/{uid}_{courseId}` when `status == 'completed'`. -> `PERMISSION_DENIED`.
+8. **Forged Certificate**: Student creates `/certificates/{id}` without completed progress. -> `PERMISSION_DENIED`.
+9. **ID Poisoning**: Write `/courses/invalid id!@#` with forbidden characters. -> `PERMISSION_DENIED`.
+10. **Client-Injected Timestamp**: Create `/prompts/{id}` with backdated `createdAt`. -> `PERMISSION_DENIED`.
+11. **Value Poisoning**: Update `/progress/{id}` with `progressPercent: 999`. -> `PERMISSION_DENIED`.
+12. **Prompt Content Tampering**: Student attempts to overwrite `generatedPrompt` on `/prompts/{id}` instead of only toggling `isFavorite`. -> `PERMISSION_DENIED`.

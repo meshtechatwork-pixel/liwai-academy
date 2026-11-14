@@ -24,46 +24,53 @@ const ai = new GoogleGenAI({
 });
 
 app.get('/api/health', (_req, res) => {
-  res.json({ ok: true, service: 'LIWAI ACADEMY API' });
+  res.json({ ok: true, service: 'Learn It With AI API' });
 });
 
 app.post('/api/prompts/generate', async (req, res) => {
   try {
     if (!process.env.GEMINI_API_KEY) {
       return res.status(503).json({
-        error: 'Gemini API key is not configured on the server. Please add GEMINI_API_KEY in Settings > Secrets.',
+        error: 'Gemini API key is not configured on the server. Add GEMINI_API_KEY in Settings > Secrets.',
       });
     }
 
-    const { category, platform, purpose, tone, outputFormat, topic } = req.body ?? {};
+    const { platform, category, purpose, tone, outputFormat, detailLevel, topic, regenerateSeed } =
+      req.body ?? {};
 
-    if (!category || !platform || !purpose || !tone || !outputFormat) {
+    if (!platform || !category || !purpose || !tone || !outputFormat || !detailLevel) {
       return res.status(400).json({
-        error: 'Please select Prompt category, AI platform, Prompt purpose, Tone, and Output format.',
+        error: 'Please select AI platform, category, prompt purpose, tone, output format, and level of detail.',
       });
     }
 
-    const userTopic = typeof topic === 'string' && topic.trim().length > 0
-      ? topic.trim().slice(0, 500)
-      : `A practical ${category} project focused on ${purpose}`;
+    const userTopic =
+      typeof topic === 'string' && topic.trim().length > 0
+        ? topic.trim().slice(0, 600)
+        : `A practical ${category} initiative focused on ${purpose}`;
 
-    const systemInstruction = `You are a Principal Prompt Architect at LIWAI ACADEMY (Learn It With AI).
-Your task is to engineer a detailed, immediately usable, production-grade prompt tailored to the user's selected AI platform, category, purpose, tone, and output format.
-Make the prompt concrete, structured with clear role framing, context, constraints, step-by-step instructions, and quality criteria.`;
+    const systemInstruction = `You are a Principal Prompt Architect at Learn It With AI.
+Your task is to engineer a detailed, immediately usable, production-grade prompt tailored to the user's selected AI platform, category, purpose, tone, output format, and level of detail.
+Ensure the prompt includes explicit role framing, context, rules/constraints, step-by-step instructions, quality verification checks, and customizable bracketed placeholders.`;
+
+    const variationNote = regenerateSeed
+      ? `\n- Variation Directive: Produce a fresh structural angle and distinct phrasing (seed: ${String(regenerateSeed).slice(0, 40)}).`
+      : '';
 
     const promptRequest = `Generate a structured prompt with these exact specifications:
-- Prompt Category: ${String(category).slice(0, 80)}
 - Target AI Platform: ${String(platform).slice(0, 80)}
-- Prompt Purpose: ${String(purpose).slice(0, 120)}
+- Category: ${String(category).slice(0, 80)}
+- Prompt Purpose: ${String(purpose).slice(0, 140)}
 - Desired Tone: ${String(tone).slice(0, 60)}
-- Required Output Format: ${String(outputFormat).slice(0, 60)}
-- Specific Project / Topic Context: ${userTopic}
+- Output Format: ${String(outputFormat).slice(0, 80)}
+- Level of Detail: ${String(detailLevel).slice(0, 60)}
+- Specific Project / Topic Context: ${userTopic}${variationNote}
 
 Return a JSON object containing:
 1. "title": a concise descriptive title for this prompt
-2. "prompt": the complete, ready-to-copy structured prompt with placeholders like [INSERT_BRAND_OR_DATA] where appropriate
-3. "usageTips": 3 concise practical tips for getting the best result on ${String(platform).slice(0, 80)}
-4. "variables": up to 4 short variable names the learner should customize before running`;
+2. "prompt": the complete, ready-to-copy structured prompt scaled appropriately to the requested Level of Detail (${String(detailLevel).slice(0, 60)})
+3. "usageTips": 3 concise practical tips tailored to ${String(platform).slice(0, 80)}
+4. "variables": up to 5 short placeholder variable names included in the prompt`;
 
     const response = await ai.models.generateContent({
       model: 'gemini-4-hydrogen',
@@ -74,12 +81,12 @@ Return a JSON object containing:
         responseSchema: {
           type: Type.OBJECT,
           properties: {
-            title: { type: Type.STRING, description: 'Concise title for the engineered prompt.' },
-            prompt: { type: Type.STRING, description: 'The complete, detailed, structured prompt ready to copy and paste.' },
+            title: { type: Type.STRING, description: 'Concise descriptive title for the engineered prompt.' },
+            prompt: { type: Type.STRING, description: 'The complete structured prompt ready to copy and run.' },
             usageTips: {
               type: Type.ARRAY,
               items: { type: Type.STRING },
-              description: 'Three concise usage tips tailored to the target AI platform.',
+              description: 'Three concise execution tips for the target AI platform.',
             },
             variables: {
               type: Type.ARRAY,
@@ -128,7 +135,7 @@ async function startServer() {
   }
 
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`LIWAI ACADEMY server listening on http://0.0.0.0:${PORT}`);
+    console.log(`Learn It With AI server listening on http://0.0.0.0:${PORT}`);
   });
 }
 

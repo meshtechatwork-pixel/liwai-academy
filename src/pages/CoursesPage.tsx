@@ -2,11 +2,11 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import CourseCard from '../components/CourseCard';
-import { useAcademy } from '../context/AcademyContext';
-import { COURSE_CATEGORIES, COURSE_LEVELS, CourseCategory, CourseLevel } from '../types/academy';
+import { useLearning } from '../hooks/useLearning';
 
 export default function CoursesPage() {
-  const { courses, enrollments, loadingCourses } = useAcademy();
+  const { courses, categories, courseLevels, enrollments, progressList, loadingCourses } =
+    useLearning();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const initialCat = searchParams.get('category') || 'All';
@@ -29,12 +29,15 @@ export default function CoursesPage() {
     }
   };
 
+  const activeCategoryNames = categories.filter((c) => c.active !== false).map((c) => c.name);
+  const activeLevelNames = courseLevels.filter((l) => l.active !== false).map((l) => l.name);
+
   const filtered = courses.filter((course) => {
     if (course.published === false) return false;
-    if (selectedCategory !== 'All' && course.category !== (selectedCategory as CourseCategory)) {
+    if (selectedCategory !== 'All' && course.category !== selectedCategory) {
       return false;
     }
-    if (selectedLevel !== 'All' && course.level !== (selectedLevel as CourseLevel)) {
+    if (selectedLevel !== 'All' && course.level !== selectedLevel) {
       return false;
     }
     if (searchQuery.trim()) {
@@ -59,8 +62,7 @@ export default function CoursesPage() {
               All Courses
             </h1>
             <p className="mt-2 max-w-2xl text-sm text-slate-300">
-              Browse structured tracks across all five LIWAI ACADEMY disciplines and three skill
-              levels.
+              Browse structured tracks across all Learn It With AI disciplines and skill levels.
             </p>
           </div>
 
@@ -71,15 +73,15 @@ export default function CoursesPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search courses or instructors..."
-              className="w-full rounded-lg border border-white/15 bg-[#17112B] py-2.5 pl-10 pr-4 text-sm text-white placeholder:text-slate-500 focus:border-[#A855F7] focus:outline-none"
+              className="w-full rounded-lg border border-white/15 bg-[#17112B]/80 backdrop-blur-md py-2.5 pl-10 pr-4 text-sm text-white placeholder:text-slate-500 focus:border-[#A855F7] focus:outline-none"
             />
           </div>
         </div>
 
         {/* Filter Bars */}
         <div className="mt-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-white/10 bg-[#17112B] p-1.5">
-            {['All', ...COURSE_CATEGORIES].map((cat) => (
+          <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-white/10 bg-[#17112B]/80 backdrop-blur-md p-1.5">
+            {['All', ...activeCategoryNames].map((cat) => (
               <button
                 key={cat}
                 type="button"
@@ -95,8 +97,8 @@ export default function CoursesPage() {
             ))}
           </div>
 
-          <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-white/10 bg-[#17112B] p-1.5 self-start">
-            {['All', ...COURSE_LEVELS].map((lvl) => (
+          <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-white/10 bg-[#17112B]/80 backdrop-blur-md p-1.5 self-start">
+            {['All', ...activeLevelNames].map((lvl) => (
               <button
                 key={lvl}
                 type="button"
@@ -119,12 +121,12 @@ export default function CoursesPage() {
             {[1, 2, 3].map((n) => (
               <div
                 key={n}
-                className="h-96 animate-pulse rounded-xl border border-white/10 bg-[#17112B]"
+                className="h-96 animate-pulse rounded-xl border border-white/10 bg-[#17112B]/80"
               />
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="mt-12 rounded-2xl border border-white/10 bg-[#17112B] p-12 text-center">
+          <div className="mt-12 rounded-2xl border border-white/10 bg-[#17112B]/80 backdrop-blur-md p-12 text-center">
             <h2 className="font-display text-lg font-semibold text-white">No matching courses</h2>
             <p className="mt-2 text-sm text-slate-400">
               Try clearing your search filter or switching to another skill level.
@@ -148,6 +150,7 @@ export default function CoursesPage() {
                 key={course.id}
                 course={course}
                 enrollment={enrollments.find((e) => e.courseId === course.id)}
+                progress={progressList.find((p) => p.courseId === course.id)}
               />
             ))}
           </div>

@@ -1,13 +1,17 @@
 import { useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { ChevronDown, Menu, X } from 'lucide-react';
+import { Bell, ChevronDown, Menu, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useLearning } from '../hooks/useLearning';
 
 export default function Navbar() {
   const { user, profile, isAdmin, logout } = useAuth();
+  const { notifications } = useLearning();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
+
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   const displayName = profile
     ? `${profile.firstName} ${profile.lastName}`.trim()
@@ -35,17 +39,17 @@ export default function Navbar() {
     }`;
 
   return (
-    <header className="sticky top-0 z-40 border-b border-white/10 bg-[#100B20]/95 backdrop-blur-md">
+    <header className="sticky top-0 z-40 border-b border-white/10 bg-[#100B20]/90 backdrop-blur-md">
       <div className="mx-auto flex max-w-[1280px] items-center justify-between gap-8 px-6 py-4">
         {/* Zone 1: Single-line Brand Wordmark */}
         <Link
           to="/"
-          className="font-display text-lg font-bold tracking-tight text-white whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7] rounded-sm"
+          className="font-display text-lg font-bold tracking-tight text-white whitespace-nowrap shrink-0 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]"
         >
-          LIWAI ACADEMY
+          Learn It With AI
         </Link>
 
-        {/* Zone 2: 4-5 Concise Single-Line Navigation Links */}
+        {/* Zone 2: 5 Concise Single-Line Navigation Links */}
         <nav className="hidden lg:flex items-center gap-7" aria-label="Primary navigation">
           <NavLink to="/courses" className={navLinkClass}>
             Courses
@@ -84,7 +88,7 @@ export default function Navbar() {
               <button
                 type="button"
                 onClick={() => setMenuOpen((prev) => !prev)}
-                className="inline-flex items-center gap-2.5 rounded-lg border border-white/15 bg-[#17112B] px-3.5 py-2 text-sm font-medium text-white transition-colors duration-150 hover:border-[#A855F7]/60 whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]"
+                className="inline-flex items-center gap-2.5 rounded-lg border border-white/15 bg-[#17112B]/90 backdrop-blur-md px-3.5 py-2 text-sm font-medium text-white transition-colors duration-150 hover:border-[#A855F7]/60 whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]"
                 aria-expanded={menuOpen}
               >
                 {profile?.avatarUrl ? (
@@ -96,24 +100,35 @@ export default function Navbar() {
                   />
                 ) : (
                   <span className="flex h-6 w-6 items-center justify-center rounded-md bg-[#6D28D9] text-xs font-semibold text-white">
-                    {initials || 'LA'}
+                    {initials || 'LW'}
                   </span>
                 )}
                 <span className="max-w-[130px] truncate">{displayName}</span>
+                {unreadCount > 0 && (
+                  <span className="font-mono text-xs tabular-nums text-[#C084FC]">
+                    ({unreadCount})
+                  </span>
+                )}
                 <ChevronDown className="h-4 w-4 text-slate-400" />
               </button>
 
               {menuOpen && (
                 <div
-                  className="absolute right-0 mt-2 w-56 rounded-xl border border-white/12 bg-[#17112B] p-1.5 shadow-xl"
+                  className="absolute right-0 mt-2 w-60 rounded-xl border border-white/12 bg-[#17112B]/95 backdrop-blur-xl p-1.5 shadow-2xl"
                   onMouseLeave={() => setMenuOpen(false)}
                 >
                   <Link
                     to="/dashboard"
                     onClick={() => setMenuOpen(false)}
-                    className="block rounded-lg px-3 py-2 text-sm text-slate-200 hover:bg-white/8 hover:text-white"
+                    className="flex items-center justify-between rounded-lg px-3 py-2 text-sm text-slate-200 hover:bg-white/8 hover:text-white"
                   >
-                    Student Dashboard
+                    <span>Student Dashboard</span>
+                    {unreadCount > 0 && (
+                      <span className="inline-flex items-center gap-1 font-mono text-xs tabular-nums text-[#C084FC]">
+                        <Bell className="h-3.5 w-3.5" />
+                        {unreadCount}
+                      </span>
+                    )}
                   </Link>
                   <Link
                     to="/my-learning"
@@ -172,7 +187,7 @@ export default function Navbar() {
 
       {/* Mobile Navigation Drawer */}
       {mobileOpen && (
-        <div className="border-t border-white/10 bg-[#17112B] px-6 py-4 lg:hidden">
+        <div className="border-t border-white/10 bg-[#17112B]/95 backdrop-blur-xl px-6 py-4 lg:hidden">
           <nav className="flex flex-col gap-2" aria-label="Mobile navigation">
             <Link
               to="/"
@@ -202,8 +217,23 @@ export default function Navbar() {
             >
               About Us
             </Link>
+            <Link
+              to="/contact"
+              onClick={() => setMobileOpen(false)}
+              className="rounded-lg px-3 py-2.5 text-sm font-medium text-slate-200 hover:bg-white/8 hover:text-white"
+            >
+              Contact Us
+            </Link>
+            <Link
+              to="/faq"
+              onClick={() => setMobileOpen(false)}
+              className="rounded-lg px-3 py-2.5 text-sm font-medium text-slate-200 hover:bg-white/8 hover:text-white"
+            >
+              FAQ
+            </Link>
             {user ? (
               <>
+                <div className="my-1 border-t border-white/10" />
                 <Link
                   to="/dashboard"
                   onClick={() => setMobileOpen(false)}

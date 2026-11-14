@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Pause, Play, RotateCcw, Volume2 } from 'lucide-react';
-import { Lesson } from '../types/academy';
+import { Lesson } from '../types/learning';
 
 interface LessonVideoPlayerProps {
   lesson: Lesson;
@@ -90,7 +90,6 @@ export default function LessonVideoPlayer({
     );
   }
 
-  // Interactive Studio Lesson Player for built-in sample modules
   const chapterIndex = progress < 34 ? 1 : progress < 68 ? 2 : 3;
   const chapters = [
     {
@@ -113,8 +112,8 @@ export default function LessonVideoPlayer({
   const activeChapter = chapters[chapterIndex - 1];
 
   return (
-    <div className="overflow-hidden rounded-xl border border-white/12 bg-[#140E27]">
-      <div className="relative aspect-video w-full overflow-hidden bg-[#0D091A] p-6 sm:p-10 flex flex-col justify-between">
+    <div className="overflow-hidden rounded-xl border border-white/12 bg-[#140E27]/90 backdrop-blur-md">
+      <div className="relative flex aspect-video w-full flex-col justify-between overflow-hidden bg-[#0D091A] p-6 sm:p-10">
         {thumbnailUrl && (
           <img
             src={thumbnailUrl}
@@ -196,7 +195,7 @@ export default function LessonVideoPlayer({
             className="h-1.5 flex-1 cursor-pointer accent-[#A855F7]"
           />
 
-          <span className="font-mono text-xs tabular-nums text-slate-300 w-10 text-right">
+          <span className="w-10 text-right font-mono text-xs tabular-nums text-slate-300">
             {progress}%
           </span>
 
@@ -210,7 +209,7 @@ export default function LessonVideoPlayer({
             {speed}
           </button>
 
-          <Volume2 className="hidden sm:block h-4 w-4 text-slate-400" />
+          <Volume2 className="hidden h-4 w-4 text-slate-400 sm:block" />
         </div>
       </div>
     </div>

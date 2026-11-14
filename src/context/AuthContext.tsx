@@ -21,7 +21,7 @@ import {
   handleFirestoreError,
   storage,
 } from '../lib/firebase';
-import { CourseLevel, StudentProfile } from '../types/academy';
+import { CourseLevel, StudentProfile } from '../types/learning';
 
 export interface RegistrationPayload {
   firstName: string;
@@ -89,7 +89,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const url = await getDownloadURL(storageRef);
       return url.slice(0, 1000);
     } catch (err) {
-      console.warn('Avatar upload to Storage unavailable or blocked; continuing with initials avatar.', err);
+      console.warn('Avatar upload to Storage unavailable; continuing with initials avatar.', err);
       return '';
     }
   };
@@ -101,7 +101,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (snap.exists()) {
         setProfile(snap.data() as StudentProfile);
       } else {
-        const displayParts = (firebaseUser.displayName || 'LIWAI Student').trim().split(/\s+/);
+        const displayParts = (firebaseUser.displayName || 'Learn It With AI Student')
+          .trim()
+          .split(/\s+/);
         const firstName = (displayParts[0] || 'Student').slice(0, 80);
         const lastName = (displayParts.slice(1).join(' ') || 'Learner').slice(0, 80);
         const isOwnerAdmin =
@@ -198,6 +200,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setProfile(profileDoc);
     } catch (err) {
       handleFirestoreError(err, OperationType.CREATE, `users/${createdUser.uid}`);
+    }
+
+    try {
+      const notifId = `welcome_${createdUser.uid}`;
+      await setDoc(doc(db, 'notifications', notifId), {
+        id: notifId,
+        userId: createdUser.uid,
+        title: 'Welcome to Learn It With AI',
+        message: 'Your student account is active. Start your first course or explore the AI Prompt Generator.',
+        type: 'info',
+        isRead: false,
+        link: '/courses',
+        createdAt: serverTimestamp(),
+      });
+    } catch {
+      // ignore non-critical welcome notification error
     }
 
     try {

@@ -75,8 +75,8 @@ export default function LoginPage() {
 
   return (
     <div className="bg-[#100B20] px-6 py-16 text-white">
-      <div className="mx-auto max-w-md rounded-2xl border border-white/10 bg-[#17112B] p-8">
-        <p className="text-xs font-semibold tracking-wide text-[#A855F7]">LIWAI ACADEMY</p>
+      <div className="mx-auto max-w-md rounded-2xl border border-white/10 bg-[#17112B]/85 backdrop-blur-md p-8">
+        <p className="text-xs font-semibold tracking-wide text-[#A855F7]">Learn It With AI</p>
         <h1 className="mt-2 font-display text-2xl font-bold text-white">Student &amp; Admin Login</h1>
         <p className="mt-1.5 text-sm text-slate-300">
           Sign in to resume your courses, generate prompts, and view certificates.
@@ -161,7 +161,7 @@ export default function LoginPage() {
         </button>
 
         <p className="mt-6 text-center text-xs text-slate-400">
-          New to LIWAI ACADEMY?{' '}
+          New to Learn It With AI?{' '}
           <Link to="/register" className="font-semibold text-[#C084FC] hover:text-white">
             Create a student account
           </Link>

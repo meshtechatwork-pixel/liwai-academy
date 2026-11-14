@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Upload, UserPlus } from 'lucide-react';
-import { useAcademy } from '../context/AcademyContext';
 import { useAuth } from '../context/AuthContext';
-import { COURSE_LEVELS, CourseLevel } from '../types/academy';
+import { useLearning } from '../hooks/useLearning';
+import { COURSE_LEVELS, CourseLevel } from '../types/learning';
 
 export default function RegisterPage() {
   const { registerWithEmail, loginWithGoogle } = useAuth();
-  const { courses, enrollInCourse } = useAcademy();
+  const { courses, enrollInCourse } = useLearning();
   const navigate = useNavigate();
 
   const [firstName, setFirstName] = useState('');
@@ -136,17 +136,17 @@ export default function RegisterPage() {
 
   return (
     <div className="bg-[#100B20] px-6 py-12 text-white lg:py-16">
-      <div className="mx-auto max-w-3xl rounded-2xl border border-white/10 bg-[#17112B] p-6 sm:p-10">
+      <div className="mx-auto max-w-3xl rounded-2xl border border-white/10 bg-[#17112B]/85 backdrop-blur-md p-6 sm:p-10">
         <div className="border-b border-white/10 pb-6">
           <p className="text-xs font-semibold tracking-wide text-[#A855F7]">
-            LIWAI ACADEMY · Student Enrollment
+            Learn It With AI · Student Enrollment
           </p>
           <h1 className="mt-2 font-display text-2xl font-bold text-white sm:text-3xl">
             Create Your Student Account
           </h1>
           <p className="mt-1.5 text-sm text-slate-300">
-            Complete your learner profile, choose your starting course and skill level, and access
-            your personalized dashboard.
+            Complete your learner profile, choose your starting course and learning level, and
+            access your personalized dashboard.
           </p>
         </div>
 
@@ -167,14 +167,11 @@ export default function RegisterPage() {
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <span className="font-display text-lg font-bold text-[#A855F7]">LA</span>
+                <span className="font-display text-lg font-bold text-[#A855F7]">LW</span>
               )}
             </div>
             <div className="flex-1">
-              <label
-                htmlFor="reg-avatar"
-                className="block text-xs font-semibold text-white"
-              >
+              <label htmlFor="reg-avatar" className="block text-xs font-semibold text-white">
                 Profile Picture (optional)
               </label>
               <p className="mt-0.5 text-xs text-slate-400">
@@ -363,7 +360,7 @@ export default function RegisterPage() {
 
             <div>
               <label htmlFor="reg-level" className="block text-xs font-medium text-slate-300">
-                Course Level Selection
+                Learning Level
               </label>
               <select
                 id="reg-level"

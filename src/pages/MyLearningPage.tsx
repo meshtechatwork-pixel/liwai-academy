@@ -1,26 +1,40 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import CourseCard from '../components/CourseCard';
-import { useAcademy } from '../context/AcademyContext';
+import { useLearning } from '../hooks/useLearning';
 
 export default function MyLearningPage() {
-  const { courses, enrollments } = useAcademy();
+  const { courses, enrollments, progressList } = useLearning();
   const [tab, setTab] = useState<'all' | 'in_progress' | 'completed'>('all');
 
   const enrolledCoursePairs = enrollments
     .map((enr) => ({
       enrollment: enr,
+      progress: progressList.find((p) => p.courseId === enr.courseId),
       course: courses.find((c) => c.id === enr.courseId),
     }))
-    .filter((pair): pair is { enrollment: (typeof enrollments)[0]; course: NonNullable<typeof pair.course> } =>
-      Boolean(pair.course),
+    .filter(
+      (
+        pair,
+      ): pair is {
+        enrollment: (typeof enrollments)[0];
+        progress: (typeof progressList)[0] | undefined;
+        course: NonNullable<typeof pair.course>;
+      } => Boolean(pair.course),
     );
 
-  const visible = enrolledCoursePairs.filter(({ enrollment }) => {
-    if (tab === 'in_progress') return enrollment.status !== 'completed';
-    if (tab === 'completed') return enrollment.status === 'completed';
+  const isPairCompleted = (pair: (typeof enrolledCoursePairs)[0]) =>
+    pair.progress?.status === 'completed' || pair.enrollment.status === 'completed';
+
+  const visible = enrolledCoursePairs.filter((pair) => {
+    const done = isPairCompleted(pair);
+    if (tab === 'in_progress') return !done;
+    if (tab === 'completed') return done;
     return true;
   });
+
+  const completedCount = enrolledCoursePairs.filter(isPairCompleted).length;
+  const inProgressCount = enrolledCoursePairs.length - completedCount;
 
   return (
     <div className="bg-[#100B20] text-white">
@@ -30,22 +44,17 @@ export default function MyLearningPage() {
             <p className="text-xs font-semibold tracking-wide text-[#A855F7]">Learner Workspace</p>
             <h1 className="mt-2 font-display text-3xl font-bold text-white">My Learning</h1>
             <p className="mt-2 text-sm text-slate-300">
-              Track active courses, lesson completion progress, and finished curricula.
+              Track active courses, lesson completion progress, and finished curricula on Learn It
+              With AI.
             </p>
           </div>
 
-          <div className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-[#17112B] p-1.5 self-start">
+          <div className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-[#17112B]/80 backdrop-blur-md p-1.5 self-start">
             {(
               [
                 { id: 'all', label: `All (${enrolledCoursePairs.length})` },
-                {
-                  id: 'in_progress',
-                  label: `In Progress (${enrolledCoursePairs.filter((p) => p.enrollment.status !== 'completed').length})`,
-                },
-                {
-                  id: 'completed',
-                  label: `Completed (${enrolledCoursePairs.filter((p) => p.enrollment.status === 'completed').length})`,
-                },
+                { id: 'in_progress', label: `In Progress (${inProgressCount})` },
+                { id: 'completed', label: `Completed (${completedCount})` },
               ] as const
             ).map((item) => (
               <button
@@ -65,7 +74,7 @@ export default function MyLearningPage() {
         </div>
 
         {visible.length === 0 ? (
-          <div className="mt-10 rounded-2xl border border-white/10 bg-[#17112B] p-12 text-center">
+          <div className="mt-10 rounded-2xl border border-white/10 bg-[#17112B]/80 backdrop-blur-md p-12 text-center">
             <h2 className="font-display text-lg font-semibold text-white">
               {tab === 'completed'
                 ? 'No completed courses yet'
@@ -83,8 +92,13 @@ export default function MyLearningPage() {
           </div>
         ) : (
           <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {visible.map(({ course, enrollment }) => (
-              <CourseCard key={course.id} course={course} enrollment={enrollment} />
+            {visible.map(({ course, enrollment, progress }) => (
+              <CourseCard
+                key={course.id}
+                course={course}
+                enrollment={enrollment}
+                progress={progress}
+              />
             ))}
           </div>
         )}

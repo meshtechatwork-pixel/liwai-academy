@@ -1,70 +1,8 @@
 {
   "entities": {
-    "Course": {
-      "title": "Course",
-      "description": "An online learning course in one of the five LIWAI ACADEMY categories.",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
-        "title": { "type": "string", "minLength": 3, "maxLength": 140 },
-        "category": {
-          "type": "string",
-          "enum": ["Web Design", "Web Development", "Social Media Management", "Video Editing", "AI Prompt Generator"],
-          "maxLength": 60
-        },
-        "level": {
-          "type": "string",
-          "enum": ["Beginner", "Intermediate", "Advanced"],
-          "maxLength": 30
-        },
-        "description": { "type": "string", "minLength": 10, "maxLength": 2000 },
-        "instructor": { "type": "string", "minLength": 2, "maxLength": 100 },
-        "duration": { "type": "string", "minLength": 2, "maxLength": 40 },
-        "thumbnailUrl": { "type": "string", "maxLength": 1000 },
-        "lessonCount": { "type": "integer" },
-        "published": { "type": "boolean" },
-        "createdAt": { "type": "string", "format": "date-time" },
-        "updatedAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["id", "title", "category", "level", "description", "instructor", "duration", "thumbnailUrl", "lessonCount", "published", "createdAt", "updatedAt"]
-    },
-    "Lesson": {
-      "title": "Lesson",
-      "description": "A lesson module belonging to a course, including video and downloadable resources.",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
-        "courseId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
-        "order": { "type": "integer" },
-        "title": { "type": "string", "minLength": 2, "maxLength": 160 },
-        "duration": { "type": "string", "minLength": 2, "maxLength": 40 },
-        "summary": { "type": "string", "minLength": 5, "maxLength": 2000 },
-        "videoUrl": { "type": "string", "maxLength": 1000 },
-        "resourceTitle": { "type": "string", "maxLength": 160 },
-        "resourceUrl": { "type": "string", "maxLength": 1000 },
-        "resourceContent": { "type": "string", "maxLength": 10000 },
-        "createdAt": { "type": "string", "format": "date-time" },
-        "updatedAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["id", "courseId", "order", "title", "duration", "summary", "videoUrl", "resourceTitle", "resourceContent", "createdAt", "updatedAt"]
-    },
-    "CourseLevel": {
-      "title": "CourseLevel",
-      "description": "Configurable difficulty tier metadata managed by admins.",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
-        "name": { "type": "string", "minLength": 2, "maxLength": 40 },
-        "description": { "type": "string", "maxLength": 500 },
-        "sortOrder": { "type": "integer" },
-        "active": { "type": "boolean" },
-        "updatedAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["id", "name", "description", "sortOrder", "active", "updatedAt"]
-    },
-    "StudentProfile": {
-      "title": "StudentProfile",
-      "description": "Registered student profile and enrollment preferences with PII isolation.",
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Registered student or admin profile with PII isolation.",
       "type": "object",
       "properties": {
         "uid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
@@ -84,65 +22,215 @@
       },
       "required": ["uid", "firstName", "lastName", "email", "phone", "country", "countyOrState", "townOrCity", "avatarUrl", "selectedCourseId", "selectedLevel", "role", "createdAt", "updatedAt"]
     },
+    "Course": {
+      "title": "Course",
+      "description": "Online learning course across platform categories and levels.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "title": { "type": "string", "minLength": 3, "maxLength": 140 },
+        "category": { "type": "string", "minLength": 2, "maxLength": 80 },
+        "level": { "type": "string", "enum": ["Beginner", "Intermediate", "Advanced"], "maxLength": 30 },
+        "description": { "type": "string", "minLength": 10, "maxLength": 2000 },
+        "instructor": { "type": "string", "minLength": 2, "maxLength": 100 },
+        "instructorBio": { "type": "string", "maxLength": 600 },
+        "duration": { "type": "string", "minLength": 2, "maxLength": 40 },
+        "thumbnailUrl": { "type": "string", "maxLength": 1000 },
+        "lessonCount": { "type": "integer" },
+        "published": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "title", "category", "level", "description", "instructor", "duration", "thumbnailUrl", "lessonCount", "published", "createdAt", "updatedAt"]
+    },
+    "Lesson": {
+      "title": "Lesson",
+      "description": "Course video lesson and downloadable study material.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "courseId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "order": { "type": "integer" },
+        "title": { "type": "string", "minLength": 2, "maxLength": 160 },
+        "duration": { "type": "string", "minLength": 2, "maxLength": 40 },
+        "summary": { "type": "string", "minLength": 5, "maxLength": 2000 },
+        "videoUrl": { "type": "string", "maxLength": 1000 },
+        "resourceTitle": { "type": "string", "maxLength": 160 },
+        "resourceUrl": { "type": "string", "maxLength": 1000 },
+        "resourceContent": { "type": "string", "maxLength": 10000 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "courseId", "order", "title", "duration", "summary", "videoUrl", "resourceTitle", "resourceContent", "createdAt", "updatedAt"]
+    },
     "Enrollment": {
       "title": "Enrollment",
-      "description": "Tracks a student's course enrollment, completed lessons, and completion percentage.",
+      "description": "Student enrollment record linking a student to a course.",
       "type": "object",
       "properties": {
         "id": { "type": "string", "minLength": 1, "maxLength": 260, "pattern": "^[a-zA-Z0-9_\\-]+$" },
         "userId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
         "courseId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
         "courseTitle": { "type": "string", "maxLength": 140 },
-        "courseCategory": { "type": "string", "maxLength": 60 },
+        "courseCategory": { "type": "string", "maxLength": 80 },
         "level": { "type": "string", "enum": ["Beginner", "Intermediate", "Advanced"], "maxLength": 30 },
-        "completedLessonIds": { "type": "array" },
-        "progressPercent": { "type": "integer" },
         "status": { "type": "string", "enum": ["in_progress", "completed"], "maxLength": 20 },
         "enrolledAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "courseId", "courseTitle", "courseCategory", "level", "status", "enrolledAt", "updatedAt"]
+    },
+    "Progress": {
+      "title": "Progress",
+      "description": "Tracks completed lessons and completion percentage for a student's course.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 260, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "courseId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "completedLessonIds": { "type": "array" },
+        "lastLessonId": { "type": "string", "maxLength": 128 },
+        "progressPercent": { "type": "integer" },
+        "status": { "type": "string", "enum": ["in_progress", "completed"], "maxLength": 20 },
         "updatedAt": { "type": "string", "format": "date-time" },
         "completedAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["id", "userId", "courseId", "courseTitle", "courseCategory", "level", "completedLessonIds", "progressPercent", "status", "enrolledAt", "updatedAt"]
+      "required": ["id", "userId", "courseId", "completedLessonIds", "progressPercent", "status", "updatedAt"]
     },
     "Certificate": {
       "title": "Certificate",
-      "description": "Issued completion certificate for a student who finished a course.",
+      "description": "Course completion certificate issued to a student.",
       "type": "object",
       "properties": {
-        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "id": { "type": "string", "minLength": 1, "maxLength": 260, "pattern": "^[a-zA-Z0-9_\\-]+$" },
         "userId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
         "studentName": { "type": "string", "minLength": 2, "maxLength": 160 },
         "courseId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
         "courseTitle": { "type": "string", "maxLength": 140 },
-        "courseCategory": { "type": "string", "maxLength": 60 },
+        "courseCategory": { "type": "string", "maxLength": 80 },
         "level": { "type": "string", "enum": ["Beginner", "Intermediate", "Advanced"], "maxLength": 30 },
-        "certificateCode": { "type": "string", "maxLength": 64 },
+        "certificateCode": { "type": "string", "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
         "issuedBy": { "type": "string", "maxLength": 120 },
         "issuedAt": { "type": "string", "format": "date-time" }
       },
       "required": ["id", "userId", "studentName", "courseId", "courseTitle", "courseCategory", "level", "certificateCode", "issuedBy", "issuedAt"]
     },
-    "SavedPrompt": {
-      "title": "SavedPrompt",
-      "description": "AI prompt generated and saved by a user in the AI Prompt Generator.",
+    "CertificateVerification": {
+      "title": "CertificateVerification",
+      "description": "Public verification record indexed by certificate code without student PII.",
+      "type": "object",
+      "properties": {
+        "certificateCode": { "type": "string", "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "courseId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "studentName": { "type": "string", "maxLength": 160 },
+        "courseTitle": { "type": "string", "maxLength": 140 },
+        "courseCategory": { "type": "string", "maxLength": 80 },
+        "level": { "type": "string", "maxLength": 30 },
+        "issuedBy": { "type": "string", "maxLength": 120 },
+        "valid": { "type": "boolean" },
+        "issuedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["certificateCode", "courseId", "studentName", "courseTitle", "courseCategory", "level", "issuedBy", "valid", "issuedAt"]
+    },
+    "PromptRecord": {
+      "title": "PromptRecord",
+      "description": "Generated AI prompt stored in user history with favourite toggle.",
       "type": "object",
       "properties": {
         "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
         "userId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
-        "category": { "type": "string", "maxLength": 80 },
+        "title": { "type": "string", "maxLength": 160 },
         "platform": { "type": "string", "maxLength": 80 },
-        "purpose": { "type": "string", "maxLength": 120 },
+        "category": { "type": "string", "maxLength": 80 },
+        "purpose": { "type": "string", "maxLength": 140 },
         "tone": { "type": "string", "maxLength": 60 },
-        "outputFormat": { "type": "string", "maxLength": 60 },
-        "topic": { "type": "string", "maxLength": 500 },
+        "outputFormat": { "type": "string", "maxLength": 80 },
+        "detailLevel": { "type": "string", "maxLength": 60 },
+        "topic": { "type": "string", "maxLength": 600 },
         "generatedPrompt": { "type": "string", "maxLength": 12000 },
+        "isFavorite": { "type": "boolean" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["id", "userId", "category", "platform", "purpose", "tone", "outputFormat", "topic", "generatedPrompt", "createdAt"]
+      "required": ["id", "userId", "title", "platform", "category", "purpose", "tone", "outputFormat", "detailLevel", "topic", "generatedPrompt", "isFavorite", "createdAt"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "User notification for enrollment, certificate issuance, or platform alerts.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "title": { "type": "string", "maxLength": 140 },
+        "message": { "type": "string", "maxLength": 500 },
+        "type": { "type": "string", "enum": ["info", "success", "certificate"], "maxLength": 30 },
+        "isRead": { "type": "boolean" },
+        "link": { "type": "string", "maxLength": 200 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "title", "message", "type", "isRead", "createdAt"]
+    },
+    "CategoryConfig": {
+      "title": "CategoryConfig",
+      "description": "Admin-managed course category.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "name": { "type": "string", "minLength": 2, "maxLength": 80 },
+        "description": { "type": "string", "maxLength": 500 },
+        "active": { "type": "boolean" },
+        "sortOrder": { "type": "integer" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "description", "active", "sortOrder", "updatedAt"]
+    },
+    "CourseLevel": {
+      "title": "CourseLevel",
+      "description": "Admin-managed difficulty level.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "name": { "type": "string", "minLength": 2, "maxLength": 40 },
+        "description": { "type": "string", "maxLength": 500 },
+        "sortOrder": { "type": "integer" },
+        "active": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "description", "sortOrder", "active", "updatedAt"]
+    },
+    "SiteContent": {
+      "title": "SiteContent",
+      "description": "Admin-editable website content such as hero copy, announcements, and contact info.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "heroHeadline": { "type": "string", "maxLength": 200 },
+        "heroSubtext": { "type": "string", "maxLength": 600 },
+        "announcement": { "type": "string", "maxLength": 300 },
+        "contactEmail": { "type": "string", "maxLength": 160 },
+        "contactPhone": { "type": "string", "maxLength": 60 },
+        "contactLocation": { "type": "string", "maxLength": 160 },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "heroHeadline", "heroSubtext", "announcement", "contactEmail", "contactPhone", "contactLocation", "updatedAt"]
+    },
+    "ContactMessage": {
+      "title": "ContactMessage",
+      "description": "Public contact form inquiry.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "name": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "email": { "type": "string", "format": "email", "maxLength": 160 },
+        "subject": { "type": "string", "minLength": 2, "maxLength": 160 },
+        "message": { "type": "string", "minLength": 10, "maxLength": 3000 },
+        "status": { "type": "string", "enum": ["new", "resolved"], "maxLength": 20 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "email", "subject", "message", "status", "createdAt"]
     },
     "AdminRecord": {
       "title": "AdminRecord",
-      "description": "Trusted administrator role assignment document.",
+      "description": "Trusted administrator RBAC registry document.",
       "type": "object",
       "properties": {
         "uid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
@@ -154,33 +242,57 @@
     }
   },
   "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Student and admin profiles with owner/admin-only read protection."
+    },
     "/courses/{courseId}": {
       "schema": { "$ref": "#/entities/Course" },
-      "description": "Course catalog documents across the 5 LIWAI ACADEMY categories."
+      "description": "Course catalog across Learn It With AI categories."
     },
-    "/courses/{courseId}/lessons/{lessonId}": {
+    "/lessons/{lessonId}": {
       "schema": { "$ref": "#/entities/Lesson" },
-      "description": "Lessons, video URLs, and downloadable resources nested under each course."
-    },
-    "/course_levels/{levelId}": {
-      "schema": { "$ref": "#/entities/CourseLevel" },
-      "description": "Difficulty tiers managed by administrators."
-    },
-    "/users/{userId}": {
-      "schema": { "$ref": "#/entities/StudentProfile" },
-      "description": "Private student profile documents containing PII, readable only by owner or admin."
+      "description": "Course lessons linked to parent courses via courseId."
     },
     "/enrollments/{enrollmentId}": {
       "schema": { "$ref": "#/entities/Enrollment" },
-      "description": "Student enrollments and lesson completion tracking."
+      "description": "Student course enrollments."
+    },
+    "/progress/{progressId}": {
+      "schema": { "$ref": "#/entities/Progress" },
+      "description": "Student lesson completion and course percentage tracking."
     },
     "/certificates/{certificateId}": {
       "schema": { "$ref": "#/entities/Certificate" },
-      "description": "Course completion certificates issued to students."
+      "description": "Issued completion certificates."
     },
-    "/saved_prompts/{promptId}": {
-      "schema": { "$ref": "#/entities/SavedPrompt" },
-      "description": "User-saved structured prompts from the AI Prompt Generator."
+    "/certificate_verifications/{certificateCode}": {
+      "schema": { "$ref": "#/entities/CertificateVerification" },
+      "description": "Public certificate lookup by unique certificate code."
+    },
+    "/prompts/{promptId}": {
+      "schema": { "$ref": "#/entities/PromptRecord" },
+      "description": "User AI prompt history and saved favourite prompts."
+    },
+    "/notifications/{notificationId}": {
+      "schema": { "$ref": "#/entities/Notification" },
+      "description": "In-app notifications for students."
+    },
+    "/categories/{categoryId}": {
+      "schema": { "$ref": "#/entities/CategoryConfig" },
+      "description": "Admin-managed learning categories."
+    },
+    "/course_levels/{levelId}": {
+      "schema": { "$ref": "#/entities/CourseLevel" },
+      "description": "Admin-managed learning difficulty levels."
+    },
+    "/site_content/{docId}": {
+      "schema": { "$ref": "#/entities/SiteContent" },
+      "description": "Admin-editable public website copy and contact settings."
+    },
+    "/contact_messages/{messageId}": {
+      "schema": { "$ref": "#/entities/ContactMessage" },
+      "description": "Contact Us inquiry submissions."
     },
     "/admins/{userId}": {
       "schema": { "$ref": "#/entities/AdminRecord" },

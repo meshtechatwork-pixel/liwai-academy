@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { CheckCircle2, Mail, Save, Upload } from 'lucide-react';
-import { useAcademy } from '../context/AcademyContext';
 import { useAuth } from '../context/AuthContext';
-import { COURSE_LEVELS, CourseLevel } from '../types/academy';
+import { useLearning } from '../hooks/useLearning';
+import { COURSE_LEVELS, CourseLevel } from '../types/learning';
 
 export default function MyProfilePage() {
   const { user, profile, updateProfileData, resendVerification, refreshProfile, logout } = useAuth();
-  const { courses } = useAcademy();
+  const { courses } = useLearning();
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -90,7 +90,9 @@ export default function MyProfilePage() {
       <div className="mx-auto max-w-3xl px-6 py-12 lg:py-16">
         <div className="flex flex-col justify-between gap-4 border-b border-white/10 pb-6 sm:flex-row sm:items-center">
           <div>
-            <p className="text-xs font-semibold tracking-wide text-[#A855F7]">Account Settings</p>
+            <p className="text-xs font-semibold tracking-wide text-[#A855F7]">
+              Learn It With AI · Account Settings
+            </p>
             <h1 className="mt-1 font-display text-3xl font-bold text-white">My Profile</h1>
           </div>
           <button
@@ -102,14 +104,13 @@ export default function MyProfilePage() {
           </button>
         </div>
 
-        {/* Email Verification Status */}
         {user && !user.emailVerified && (
           <div className="mt-6 flex flex-col justify-between gap-3 rounded-xl border border-amber-400/30 bg-amber-500/10 p-4 sm:flex-row sm:items-center">
             <div className="flex items-center gap-3 text-xs text-amber-100">
-              <Mail className="h-4 w-4 text-amber-300 shrink-0" />
+              <Mail className="h-4 w-4 shrink-0 text-amber-300" />
               <span>Your email address ({user.email}) is not yet verified.</span>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex shrink-0 items-center gap-2">
               <button
                 type="button"
                 onClick={handleResend}
@@ -142,7 +143,7 @@ export default function MyProfilePage() {
 
         <form
           onSubmit={handleSubmit}
-          className="mt-6 space-y-6 rounded-2xl border border-white/10 bg-[#17112B] p-6 sm:p-8"
+          className="mt-6 space-y-6 rounded-2xl border border-white/10 bg-[#17112B]/80 backdrop-blur-md p-6 sm:p-8"
         >
           <div className="flex flex-col gap-4 rounded-xl border border-white/10 bg-[#100B20] p-4 sm:flex-row sm:items-center">
             <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/15 bg-[#17112B]">
@@ -155,7 +156,7 @@ export default function MyProfilePage() {
                 />
               ) : (
                 <span className="font-display text-lg font-bold text-[#A855F7]">
-                  {(firstName[0] || 'L') + (lastName[0] || 'A')}
+                  {(firstName[0] || 'L') + (lastName[0] || 'W')}
                 </span>
               )}
             </div>

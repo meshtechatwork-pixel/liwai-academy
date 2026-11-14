@@ -1,12 +1,21 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Award, CheckCircle2, Circle, Download, FileText, Lock, PlayCircle } from 'lucide-react';
+import {
+  ArrowLeft,
+  Award,
+  CheckCircle2,
+  Circle,
+  Download,
+  FileText,
+  Lock,
+  PlayCircle,
+} from 'lucide-react';
 import CertificateModal from '../components/CertificateModal';
 import LessonVideoPlayer from '../components/LessonVideoPlayer';
-import { useAcademy } from '../context/AcademyContext';
 import { useAuth } from '../context/AuthContext';
 import { CATEGORY_IMAGES } from '../data/sampleCourses';
-import { Certificate, Lesson } from '../types/academy';
+import { useLearning } from '../hooks/useLearning';
+import { Certificate, Lesson } from '../types/learning';
 
 export default function CourseDetailPage() {
   const { courseId } = useParams<{ courseId: string }>();
@@ -15,14 +24,16 @@ export default function CourseDetailPage() {
   const {
     courses,
     enrollments,
+    progressList,
     certificates,
     fetchLessons,
     enrollInCourse,
     toggleLessonComplete,
-  } = useAcademy();
+  } = useLearning();
 
   const course = courses.find((c) => c.id === courseId);
   const enrollment = enrollments.find((e) => e.courseId === courseId);
+  const progressRecord = progressList.find((p) => p.courseId === courseId);
   const certificate = certificates.find((c) => c.courseId === courseId);
 
   const [lessons, setLessons] = useState<Lesson[]>([]);
@@ -61,10 +72,10 @@ export default function CourseDetailPage() {
   if (!course) {
     return (
       <div className="mx-auto max-w-[1280px] px-6 py-20 text-center">
-        <div className="rounded-2xl border border-white/10 bg-[#17112B] p-12">
+        <div className="rounded-2xl border border-white/10 bg-[#17112B]/80 backdrop-blur-md p-12">
           <h1 className="font-display text-2xl font-bold text-white">Course not found</h1>
           <p className="mt-2 text-sm text-slate-400">
-            The requested course could not be located in the LIWAI ACADEMY catalog.
+            The requested course could not be located in the Learn It With AI catalog.
           </p>
           <Link
             to="/courses"
@@ -78,8 +89,8 @@ export default function CourseDetailPage() {
   }
 
   const activeLesson = lessons.find((l) => l.id === activeLessonId) || lessons[0];
-  const completedIds = new Set(enrollment?.completedLessonIds || []);
-  const progressPercent = enrollment?.progressPercent ?? 0;
+  const completedIds = new Set(progressRecord?.completedLessonIds || []);
+  const progressPercent = progressRecord?.progressPercent ?? 0;
 
   const handleEnroll = async () => {
     if (!user) {
@@ -109,7 +120,9 @@ export default function CourseDetailPage() {
     try {
       const result = await toggleLessonComplete(course, lessons, lessonId);
       if (result.certificateIssued) {
-        setStatusMessage('Course completed! Your certificate has been issued.');
+        setStatusMessage(
+          `Course completed! Certificate ${result.certificateIssued.certificateCode} has been issued.`,
+        );
         setPreviewCert(result.certificateIssued);
       }
     } catch (err) {
@@ -170,12 +183,17 @@ export default function CourseDetailPage() {
             <p className="mt-4 max-w-3xl text-base leading-relaxed text-slate-300">
               {course.description}
             </p>
-            <p className="mt-4 text-sm text-slate-400">
-              Instructor: <span className="font-semibold text-white">{course.instructor}</span>
-            </p>
+            <div className="mt-4 text-sm text-slate-400">
+              <p>
+                Instructor: <span className="font-semibold text-white">{course.instructor}</span>
+              </p>
+              {course.instructorBio && (
+                <p className="mt-1 text-xs text-slate-400">{course.instructorBio}</p>
+              )}
+            </div>
           </div>
 
-          <div className="flex flex-col justify-between rounded-xl border border-white/10 bg-[#17112B] p-6 lg:col-span-4">
+          <div className="flex flex-col justify-between rounded-xl border border-white/10 bg-[#17112B]/80 backdrop-blur-md p-6 lg:col-span-4">
             <div>
               <div className="flex items-center justify-between text-xs text-slate-300">
                 <span>Learning Progress</span>
@@ -191,12 +209,17 @@ export default function CourseDetailPage() {
                 Status:{' '}
                 <span className="font-semibold text-white">
                   {enrollment
-                    ? enrollment.status === 'completed'
+                    ? progressRecord?.status === 'completed' || enrollment.status === 'completed'
                       ? 'Completed'
                       : 'In Progress'
                     : 'Not Enrolled'}
                 </span>
               </p>
+              {certificate && (
+                <p className="mt-1.5 font-mono text-xs text-[#C084FC]">
+                  Certificate ID: {certificate.certificateCode}
+                </p>
+              )}
             </div>
 
             <div className="mt-6 flex flex-col gap-2.5">
@@ -244,10 +267,9 @@ export default function CourseDetailPage() {
 
         {/* Two-Zone Course Learning Studio */}
         <div className="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-12">
-          {/* Main Video & Resource Stage */}
           <div className="lg:col-span-8">
             {loadingLessons ? (
-              <div className="aspect-video w-full animate-pulse rounded-xl border border-white/10 bg-[#17112B]" />
+              <div className="aspect-video w-full animate-pulse rounded-xl border border-white/10 bg-[#17112B]/80" />
             ) : activeLesson ? (
               <div>
                 <LessonVideoPlayer
@@ -256,7 +278,7 @@ export default function CourseDetailPage() {
                   thumbnailUrl={course.thumbnailUrl || CATEGORY_IMAGES[course.category]}
                 />
 
-                <div className="mt-6 rounded-xl border border-white/10 bg-[#17112B] p-6">
+                <div className="mt-6 rounded-xl border border-white/10 bg-[#17112B]/80 backdrop-blur-md p-6">
                   <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
                     <div>
                       <p className="text-xs font-medium text-[#A855F7]">
@@ -300,7 +322,7 @@ export default function CourseDetailPage() {
                     <div className="flex items-center gap-3">
                       <FileText className="h-5 w-5 text-[#A855F7] shrink-0" />
                       <div>
-                        <p className="text-xs text-slate-400">Downloadable Resource</p>
+                        <p className="text-xs text-slate-400">Downloadable Learning Material</p>
                         <p className="text-sm font-medium text-white">
                           {activeLesson.resourceTitle || `${activeLesson.title} Guide`}
                         </p>
@@ -318,7 +340,7 @@ export default function CourseDetailPage() {
                 </div>
               </div>
             ) : (
-              <div className="rounded-xl border border-white/10 bg-[#17112B] p-10 text-center text-sm text-slate-400">
+              <div className="rounded-xl border border-white/10 bg-[#17112B]/80 backdrop-blur-md p-10 text-center text-sm text-slate-400">
                 No lessons have been published for this course yet.
               </div>
             )}
@@ -326,7 +348,7 @@ export default function CourseDetailPage() {
 
           {/* Curriculum Playlist Sidebar */}
           <aside className="lg:col-span-4">
-            <div className="rounded-xl border border-white/10 bg-[#17112B] p-5">
+            <div className="rounded-xl border border-white/10 bg-[#17112B]/80 backdrop-blur-md p-5">
               <div className="flex items-center justify-between border-b border-white/10 pb-4">
                 <h2 className="font-display text-base font-semibold text-white">
                   Course Curriculum
